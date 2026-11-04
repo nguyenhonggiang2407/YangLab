@@ -8,6 +8,8 @@ YangMinutes · YangLaunch · YangSpec
 
 Node.js 24 · SQLite · JavaScript · Không có dependency runtime bên ngoài
 
+[![YangLab checks](https://github.com/nguyenhonggiang2407/YangLab/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nguyenhonggiang2407/YangLab/actions/workflows/ci.yml)
+
 [Chạy thử](#chạy-thử) · [Các ứng dụng](#các-ứng-dụng) · [Kiểm thử](#kiểm-thử) · [Ghi nguồn](NOTICE.md)
 
 </div>
@@ -15,7 +17,8 @@ Node.js 24 · SQLite · JavaScript · Không có dependency runtime bên ngoài
 YangLab là monorepo gồm ba ứng dụng nhỏ phục vụ công việc nhóm, kế hoạch nội
 dung và thiết kế API. Mỗi ứng dụng có domain, giao diện và README riêng; chúng
 dùng chung HTTP server, SQLite, phiên workspace, kiểm soát phiên bản và CI.
-Mã hiện được lưu trên nhánh **yanglab** của repo DTDD.
+Repository độc lập này chuyển từ nhánh `yanglab` của DTDD, giữ nguyên lịch sử commit
+liên quan và cả ba ứng dụng cùng runtime chung. Xem [nguồn và kiểm chứng lần tách](docs/repository-migration.md).
 
 ## Các ứng dụng
 
@@ -42,7 +45,7 @@ Cần Node.js **24 trở lên**. Dữ liệu được lưu ở máy chủ chạy
 trình duyệt có một workspace riêng gắn với cookie.
 
 ```bash
-git clone --branch yanglab --single-branch https://github.com/nguyenhonggiang2407/DTDD.git YangLab
+git clone https://github.com/nguyenhonggiang2407/YangLab.git
 cd YangLab
 npm ci
 npm start
@@ -65,8 +68,9 @@ Hoặc dùng Docker:
 docker compose up --build
 ```
 
-Compose mở cổng trên loopback và giữ SQLite trong named volume. Chưa chạy
-build Docker trong phiên bàn giao; đường chạy Node và các kiểm thử là phần được xác minh.
+Compose mở cổng trên loopback và giữ SQLite trong named volume. Môi trường Windows
+của lần tách repository không có Docker CLI nên chưa chạy build/container tại đây;
+đường chạy Node và các kiểm thử được ghi ở [kết quả lần tách](docs/repository-migration.md).
 
 ## Tổ chức mã nguồn
 
