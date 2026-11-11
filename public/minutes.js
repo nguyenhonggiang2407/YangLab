@@ -21,7 +21,9 @@ let workspace,
   selected = null,
   editing = null,
   stagedActions = [];
-const form = $('#meeting-form');
+const form = $('#meeting-form'),
+  save = $('#save-meeting'),
+  saveCopy = $('#save-meeting-copy');
 function current() {
   return items.find((item) => item.id === selected);
 }
@@ -237,6 +239,7 @@ function openEditor(record = null) {
   editing = record;
   stagedActions = record ? structuredClone(record.data.actions) : [];
   form.reset();
+  saveCopy.hidden = true;
   $('#extract-preview').hidden = true;
   $('#meeting-dialog-title').textContent = record ? 'Chỉnh sửa cuộc họp' : 'Tạo cuộc họp';
   const d = record?.data || {
@@ -250,10 +253,13 @@ function openEditor(record = null) {
   form.elements.participants.value = d.participants.join(', ');
   showDialog('meeting-dialog');
 }
-$('#meeting-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const save = $('#save-meeting');
+async function saveMeeting(asCopy = false) {
+  if (save.disabled || (asCopy && saveCopy.hidden)) return;
+  if (asCopy && !form.reportValidity()) return;
+  const original = editing;
+  let conflict = false;
   save.disabled = true;
+  saveCopy.disabled = true;
   await run(async () => {
     const data = Object.fromEntries(new FormData(form));
     data.participants = data.participants
@@ -261,16 +267,40 @@ $('#meeting-form').addEventListener('submit', async (event) => {
       .map((s) => s.trim())
       .filter(Boolean);
     data.actions = stagedActions;
-    const record = editing
-      ? await api('/api/minutes/items/' + editing.id, 'PUT', { version: editing.version, data })
-      : await api('/api/minutes/items', 'POST', { data });
+    let record;
+    if (original && !asCopy) {
+      try {
+        record = await api('/api/minutes/items/' + original.id, 'PUT', {
+          version: original.version,
+          data,
+        });
+      } catch (err) {
+        if (err.status !== 409) throw err;
+        conflict = true;
+        throw new Error(
+          'Dữ liệu đã thay đổi ở tab khác. Bạn có thể lưu bản đang sửa thành cuộc họp mới.',
+        );
+      }
+    } else {
+      record = await api('/api/minutes/items', 'POST', { data });
+    }
     selected = record.id;
     closeDialog('meeting-dialog');
     await refresh();
-    toast('Đã lưu cuộc họp.');
+    toast(asCopy ? 'Đã lưu bản đang sửa thành cuộc họp mới.' : 'Đã lưu cuộc họp.');
   });
   save.disabled = false;
+  saveCopy.disabled = false;
+  if (conflict && $('#meeting-dialog').open && editing === original) {
+    saveCopy.hidden = false;
+    saveCopy.focus();
+  }
+}
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  saveMeeting();
 });
+saveCopy.addEventListener('click', () => saveMeeting(true));
 $('#extract-actions').addEventListener('click', () =>
   run(async () => {
     const result = await api('/api/minutes/extract', 'POST', { notes: form.elements.notes.value });

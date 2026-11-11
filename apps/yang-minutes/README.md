@@ -24,8 +24,10 @@ Parser chỉ đọc cấu trúc trên và báo dòng sai. Công việc không đ
 câu tự do. Mỗi cuộc họp tối đa 40 công việc, 16 thành viên và 40.000 ký tự ghi
 chép. Công việc không có hạn không được đưa vào file lịch.
 
-Chỉnh sửa có version để ngăn tab cũ ghi đè dữ liệu mới. Lịch sử giữ tối đa 20
-phiên bản; xóa cuộc họp sẽ xóa cả lịch sử của cuộc họp.
+Chỉnh sửa có version để ngăn tab cũ ghi đè dữ liệu mới. Khi hai tab lưu cùng
+một cuộc họp, tab bị báo xung đột giữ phần đang nhập và có thể chọn
+**Lưu thành cuộc họp mới** để giữ bản đang sửa. Lịch sử giữ tối đa 20 phiên bản.
+Khi xóa một cuộc họp, lịch sử của cuộc họp đó cũng bị xóa.
 
 ## Nguồn và phần phát triển
 
