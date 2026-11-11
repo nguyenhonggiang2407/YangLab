@@ -164,8 +164,8 @@ test('YangSpec: invalid JSON stays in editor, endpoint save and real OpenAPI par
   assert.deepEqual(errors, []);
   await context.close();
 });
-test('two tabs preserve unsaved edits and reject stale saves', async () => {
-  const { context, page: first, errors } = await pageFor('minutes');
+test('YangMinutes saves a conflicting draft as a separate meeting', async () => {
+  const { context, page: first, errors } = await pageFor('minutes', true);
   await demo(first, 'minutes');
   const second = await context.newPage();
   await second.goto(base + '/minutes');
@@ -182,14 +182,35 @@ test('two tabs preserve unsaved edits and reject stale saves', async () => {
     .locator('#meeting-form')
     .getByLabel('Tên cuộc họp', { exact: true })
     .fill('Nội dung chưa lưu');
+  await first
+    .locator('#meeting-form')
+    .getByLabel('Ghi chép', { exact: true })
+    .fill('Ghi chép cần giữ lại');
+  const saveCopy = first.getByRole('button', { name: 'Lưu thành cuộc họp mới', exact: true });
+  await expect(saveCopy).not.toBeVisible();
   await first.locator('#save-meeting').click();
   await expect(first.locator('#meeting-dialog .dialog-error')).toContainText('tab khác');
   await expect(
     first.locator('#meeting-form').getByLabel('Tên cuộc họp', { exact: true }),
   ).toHaveValue('Nội dung chưa lưu');
-  await first.getByRole('button', { name: 'Đóng cuộc họp', exact: true }).click();
+  await expect(saveCopy).toBeFocused();
+  assert.ok(
+    await first
+      .locator('#meeting-dialog')
+      .evaluate((dialog) => dialog.scrollWidth <= dialog.clientWidth),
+    'The conflict action fits the editor at 390px',
+  );
+  await saveCopy.click();
+  await expect(first.locator('#meeting-dialog')).not.toBeVisible();
+  await expect(first.locator('#stat-meetings')).toHaveText('2');
+  await expect(first.locator('#meeting-detail h2')).toHaveText('Nội dung chưa lưu');
+  await first.getByText('Đọc ghi chép đầy đủ', { exact: true }).click();
+  await expect(first.getByText('Ghi chép cần giữ lại', { exact: true })).toBeVisible();
+  await first.getByRole('button', { name: 'Mở Bản cập nhật từ tab hai', exact: true }).click();
   await first.locator('#refresh').click();
   await expect(first.locator('#meeting-detail h2')).toHaveText('Bản cập nhật từ tab hai');
+  await first.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await expect(saveCopy).not.toBeVisible();
   assert.deepEqual(errors, []);
   await context.close();
 });
